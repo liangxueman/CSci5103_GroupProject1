@@ -1,45 +1,24 @@
+#include <assert.h>
+#include "commons.h"
+#include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <pthread.h>
 
-// TODO: (1) N should be the arugments (2) fix the code style (3) put common code and variables in commons.h
-
-#define DEBUG
-
-#define N 6
-const char* colors[3];
-
-typedef struct item {
-  int color_id;
-  struct timeval timestamp;
-} item;
-
-typedef struct shared_content {
-  item buffer[N];
-  int count;
-  int in;
-  int out;
-  pthread_cond_t spaceAvailable, itemAvailable;
-  pthread_mutex_t wr_lock;
-  pthread_mutex_t color_lock_producer[3];
-  pthread_mutex_t color_lock_consumer[3];
-} shared_content;
+// TODO: make buffer_size an argument to initialize buffer in commons.h
 
 int main(int argc, char *argv[]) {
 //  if (argc != 2) {
-//    printf("./prodcons N");
+//    printf("./prodcons buffer_size\n");
+//    exit(0);
 //  }
 
-  colors[0] = "red";
-  colors[1] = "green";
-  colors[2] = "blue";
-
   int shmem_id;
-  shared_content *shmem_ptr;
+  shared_content* shmem_ptr;
 
   key_t key = 4455;
   size_t size = 2048;
@@ -51,19 +30,13 @@ int main(int argc, char *argv[]) {
     printf("shmget failed\n");
     exit(1);
   }
-  #ifdef DEBUG
-  printf ("Got shmem id = %d \n",shmem_id);
-  #endif
 
   // attach the new segment into my address space
-  shmem_ptr = shmat(shmem_id, (void *) NULL, 1023);
-  if (shmem_ptr == (void *)-1) {
+  shmem_ptr = shmat(shmem_id, (void*) NULL, 1023);
+  if (shmem_ptr == (void*)-1) {
     printf("shmat failed \n");
     exit(2);
   }
-  #ifdef DEBUG
-  printf("Got ptr = %p\n", shmem_ptr);
-  #endif
 
   // initialize data in shared memory
   shmem_ptr[0].count = 0;
@@ -95,7 +68,7 @@ int main(int argc, char *argv[]) {
   pthread_mutex_lock(&shmem_ptr[0].color_lock_consumer[2]);
   printf("Finish initialization\n");
 
-//   create producer and consumer process
+  // create producer and consumer process
   char keystr[10];
   sprintf(keystr, "%d", key);
   pid_t main_pid = getpid();
