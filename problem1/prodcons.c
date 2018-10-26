@@ -3,13 +3,16 @@
 #include <string.h>
 #include <sys/time.h>
 
+// TODO: (1) N should be the arugments (2) fix the code style
+
 typedef struct item {
   int color_id;
   struct timeval timestamp;
 } item;
 
-#define N 2
+#define N 6
 item buffer[N];
+int number_deposits = 1000;
 int count = 0;
 int in = 0;
 int out = 0;
@@ -31,7 +34,6 @@ void* producer(int color_id) {
     printf("Error opening file!\n");
     return 0;
   }
-  int number_deposits = 10;
   for (int i = 0; i < number_deposits; i++) {
     // wait on its own color lock to enforce the deposit order
     pthread_mutex_lock(&color_lock_producer[color_id]);
@@ -46,13 +48,52 @@ void* producer(int color_id) {
     gettimeofday(&buffer[in].timestamp, NULL);
     fprintf(f, "%s %u.%06u\n", colors[color_id], buffer[in].timestamp.tv_sec,
             buffer[in].timestamp.tv_usec);
-    printf("producer_%s deposit %d/%d: \n", colors[color_id], i, number_deposits);
+    printf("producer_%s deposit %d/%d \n", colors[color_id], i, number_deposits);
+
+    count = count + 1;
+    in = (in+1) % N;
 
     // exit critical section
     pthread_mutex_unlock(&wr_lock);
     pthread_cond_signal(&itemAvailable);
     // free the next color producer
     pthread_mutex_unlock(&color_lock_producer[(color_id + 1) % 3]);
+  }
+  fclose(f);
+}
+
+void* consumer(int color_id) {
+  char file_name[100] = "consumer_";
+  strcat(file_name, colors[color_id]);
+  char file_extend[10] = ".log";
+  strcat(file_name, file_extend);
+  FILE *f = fopen(file_name, "w");
+  if (f == NULL){
+    printf("Error opening file!\n");
+    return 0;
+  }
+  for (int i = 0; i < number_deposits; i++) {
+    // wait on its own color lock to enforce the  order
+    pthread_mutex_lock(&color_lock_consumer[color_id]);
+    pthread_mutex_lock(&wr_lock);
+    // enter critical section
+    while (count == 0)
+      // consumer blocked when buffer is empty
+      while (pthread_cond_wait(&itemAvailable, &wr_lock) != 0);
+
+    // consume
+    fprintf(f,"%s %u.%06u\n", colors[buffer[out].color_id], buffer[out].timestamp.tv_sec,
+            buffer[out].timestamp.tv_usec);
+    printf("consumer_%s consume %d/%d, item color %s \n", colors[color_id],
+        i, number_deposits, colors[buffer[out].color_id]);
+
+    count = count - 1;
+    out = (out + 1) % N;
+    //exit critical section
+    pthread_mutex_unlock(&wr_lock);
+    pthread_cond_signal(&spaceAvailable);
+    // free the next color consumer
+    pthread_mutex_unlock(&color_lock_consumer[(color_id + 1) % 3]);
   }
   fclose(f);
 }
@@ -76,15 +117,18 @@ int main(int argc, char *argv[]) {
   pthread_mutex_lock(&color_lock_producer[2]);
   for (int i = 0; i < 3; i++) {
     pthread_mutex_init(&color_lock_consumer[i], NULL);
-    pthread_mutex_lock(&color_lock_consumer[i]);
   }
+  pthread_mutex_lock(&color_lock_consumer[1]);
+  pthread_mutex_lock(&color_lock_consumer[2]);
   pthread_cond_init(&spaceAvailable, NULL);
   pthread_cond_init(&itemAvailable, NULL);
 
   for (int i = 0; i < 3; i++) {
     pthread_create(&producer_tid[i], NULL, producer, i);
+    pthread_create(&consumer_tid[i], NULL, consumer, i);
   }
   for (int j = 0; j < 3; j++) {
     pthread_join(producer_tid[j], NULL);
+    pthread_join(consumer_tid[j], NULL);
   }
 }
