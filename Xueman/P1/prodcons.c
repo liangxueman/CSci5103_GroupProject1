@@ -26,9 +26,9 @@ pthread_mutex_t consumerMutex[3];
 
 void* producer(int colorCode) {
 	char filename[80] = "producer_";
-  strcat(filename, colors[colorCode]);
-  strcat(filename, ".log");
-  FILE *file = fopen(filename, "w");
+	strcat(filename, colors[colorCode]);
+	strcat(filename, ".log");
+	FILE *file = fopen(filename, "w");
 
 	for(int i=0; i<iteration; i++) {
 		pthread_mutex_lock(&lock);
@@ -37,25 +37,25 @@ void* producer(int colorCode) {
 		}
 
 		buffer[in].colorCode = colorCode;
-    gettimeofday(&buffer[in].timestamp, NULL);
-    fprintf(file, "%s %u.%06u\n", colors[colorCode], buffer[in].timestamp.tv_sec, buffer[in].timestamp.tv_usec);
+		gettimeofday(&buffer[in].timestamp, NULL);
+		fprintf(file, "%s %u.%06u\n", colors[colorCode], buffer[in].timestamp.tv_sec, buffer[in].timestamp.tv_usec);
 
 		count = count + 1;
-    in = (in + 1) % bufferSize;
-    printf("One %s item has been deposited\n", colors[colorCode]);
-    nextProducer = (nextProducer + 1) % 3;
+		in = (in + 1) % bufferSize;
+		printf("One %s item has been deposited\n", colors[colorCode]);
+		nextProducer = (nextProducer + 1) % 3;
 
 		pthread_cond_signal(&consumerMutex[colorCode]);
-    pthread_cond_signal(&producerMutex[((colorCode + 1) % 3)]);
-    pthread_mutex_unlock(&lock);
+		pthread_cond_signal(&producerMutex[((colorCode + 1) % 3)]);
+		pthread_mutex_unlock(&lock);
 	}
 }
 
 void* consumer(int colorCode) {
 	char filename[80] = "consumer_";
-  strcat(filename, colors[colorCode]);
-  strcat(filename, ".log");
-  FILE *file = fopen(filename, "w");
+	strcat(filename, colors[colorCode]);
+	strcat(filename, ".log");
+	FILE *file = fopen(filename, "w");
 
 	for(int i=0; i<iteration; i++) {
 		pthread_mutex_lock(&lock);
