@@ -30,7 +30,7 @@ void* producer(int color_id) {
   strcat(file_name, colors[color_id]);
   char file_extend[10] = ".log";
   strcat(file_name, file_extend);
-  FILE *f = fopen(file_name, "w");
+  FILE* f = fopen(file_name, "w");
   if (f == NULL){
     printf("Error opening file!\n");
     return 0;
@@ -47,8 +47,8 @@ void* producer(int color_id) {
     // deposit
     buffer[in].color_id = color_id;
     gettimeofday(&buffer[in].timestamp, NULL);
-    fprintf(f, "%s %u.%06u\n", colors[color_id], buffer[in].timestamp.tv_sec,
-            buffer[in].timestamp.tv_usec);
+    fprintf(f, "%s %u.%06u\n", colors[color_id],
+        buffer[in].timestamp.tv_sec, buffer[in].timestamp.tv_usec);
     printf("producer_%s deposit %d/%d \n", colors[color_id], i, number_deposits);
 
     count = count + 1;
@@ -68,7 +68,7 @@ void* consumer(int color_id) {
   strcat(file_name, colors[color_id]);
   char file_extend[10] = ".log";
   strcat(file_name, file_extend);
-  FILE *f = fopen(file_name, "w");
+  FILE* f = fopen(file_name, "w");
   if (f == NULL){
     printf("Error opening file!\n");
     return 0;
@@ -83,8 +83,8 @@ void* consumer(int color_id) {
       while (pthread_cond_wait(&itemAvailable, &wr_lock) != 0);
 
     // consume
-    fprintf(f,"%s %u.%06u\n", colors[buffer[out].color_id], buffer[out].timestamp.tv_sec,
-            buffer[out].timestamp.tv_usec);
+    fprintf(f,"%s %u.%06u\n", colors[buffer[out].color_id],
+        buffer[out].timestamp.tv_sec, buffer[out].timestamp.tv_usec);
     printf("consumer_%s consume %d/%d, item color %s \n", colors[color_id],
            i, number_deposits, colors[buffer[out].color_id]);
 
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 
   buffer_size = atoi(argv[1]);
   assert(buffer_size > 0);
-  buffer= malloc(sizeof(struct item) * buffer_size);
+  buffer = malloc(sizeof(struct item) * buffer_size);
 
   colors[0] = "red";
   colors[1] = "green";
