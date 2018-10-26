@@ -88,7 +88,7 @@ int main(int argc, char const *argv[]) {
 		return(0);
 	}
 
-	buffer= malloc(sizeof(int) * bufferSize);
+	buffer= malloc(sizeof(struct item) * bufferSize);
 
 	colors[0] = "red";
 	colors[1] = "green";
