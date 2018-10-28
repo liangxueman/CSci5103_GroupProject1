@@ -17,11 +17,16 @@ int main(int argc, char *argv[]) {
 //    exit(0);
 //  }
 
+  // shared memory identifier
   int shmem_id;
+  // pointer to shared segment
   shared_content* shmem_ptr;
 
+  // key to the shared memory
   key_t key = 4455;
+  // 2Kb memory
   size_t size = 2048;
+  // all permissions and modes are set
   int flag = 1023;
 
   // create a shared memory segment

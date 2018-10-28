@@ -15,11 +15,10 @@ int main(int argc, char *argv[]) {
     printf("./consumer key color_id\n");
   }
 
-  colors[0] = "red";
-  colors[1] = "green";
-  colors[2] = "blue";
+  // color identifier
   int color_id = atoi(argv[2]);
 
+  // shared memory identifier
   int shared_id = shmget(atoi(argv[1]), 0, 0);
   if (shared_id == -1) {
     printf("child shmget failed\n");
@@ -27,8 +26,8 @@ int main(int argc, char *argv[]) {
   }
 
   // attach the segment into the address space
-  shared_content* ptr = shmat (shared_id, (void*) NULL, 1023);
-  if (ptr == (void *) -1) {
+  shared_content* ptr = shmat(shared_id, (void*) NULL, 1023);
+  if (ptr == (void*) -1) {
     printf("child shmat failed\n");
     exit(2);
   }
@@ -57,7 +56,7 @@ int main(int argc, char *argv[]) {
     fprintf(f,"%s %u.%06u\n", colors[ptr[0].buffer[ptr[0].out].color_id],
         ptr[0].buffer[ptr[0].out].timestamp.tv_sec, ptr[0].buffer[ptr[0].out].timestamp.tv_usec);
     printf("consumer_%s consume %d/%d, item color %s \n", colors[color_id],
-           i, number_deposits, colors[ptr[0].buffer[ptr[0].out].color_id]);
+           i + 1, number_deposits, colors[ptr[0].buffer[ptr[0].out].color_id]);
 
     ptr[0].count = ptr[0].count - 1;
     ptr[0].out = (ptr[0].out + 1) % buffer_size;
@@ -68,5 +67,5 @@ int main(int argc, char *argv[]) {
     pthread_mutex_unlock(&ptr[0].color_lock_consumer[(color_id + 1) % 3]);
   }
   fclose(f);
-  shmdt ( (void*) ptr);
+  shmdt((void*) ptr);
 }

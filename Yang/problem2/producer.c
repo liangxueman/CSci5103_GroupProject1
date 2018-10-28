@@ -15,8 +15,10 @@ int main(int argc, char *argv[]) {
     printf("./producer key color_id\n");
   }
 
+  // color identifier
   int color_id = atoi(argv[2]);
 
+  // shared memory identifier
   int shared_id = shmget(atoi(argv[1]), 0, 0);
   if (shared_id == -1) {
     printf("child shmget failed\n");
@@ -55,7 +57,7 @@ int main(int argc, char *argv[]) {
     gettimeofday(&ptr[0].buffer[ptr[0].in].timestamp, NULL);
     fprintf(f, "%s %u.%06u\n", colors[color_id],
         ptr[0].buffer[ptr[0].in].timestamp.tv_sec, ptr[0].buffer[ptr[0].in].timestamp.tv_usec);
-    printf("producer_%s deposit %d/%d \n", colors[color_id], i, number_deposits);
+    printf("producer_%s deposit %d/%d \n", colors[color_id], i + 1, number_deposits);
 
     ptr[0].count = ptr[0].count + 1;
     ptr[0].in = (ptr[0].in + 1) % buffer_size;
@@ -67,5 +69,5 @@ int main(int argc, char *argv[]) {
     pthread_mutex_unlock(&ptr[0].color_lock_producer[(color_id + 1) % 3]);
   }
   fclose(f);
-  shmdt ( (void *) ptr);
+  shmdt ((void*) ptr);
 }
