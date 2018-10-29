@@ -13,7 +13,7 @@ struct item {
 
 int bufferSize; 
 struct item* buffer;
-char* colors[3];
+const char* colors[3] = {"red", "green", "blue"};
 
 int count = 0;
 int in = 0;
@@ -21,19 +21,23 @@ int out = 0;
 int nextProducer = 0;
 
 pthread_mutex_t lock;
-pthread_mutex_t producerMutex[3];
-pthread_mutex_t consumerMutex[3];
+pthread_cond_t producerCond[3];
+pthread_cond_t consumerCond[3];
 
 void* producer(int colorCode) {
 	char filename[80] = "producer_";
 	strcat(filename, colors[colorCode]);
 	strcat(filename, ".log");
 	FILE *file = fopen(filename, "w");
+	if(file == NULL) {
+		printf("Fialed to open log file.\n");
+		exit(1);
+	}
 
 	for(int i=0; i<iteration; i++) {
 		pthread_mutex_lock(&lock);
 		while (count == bufferSize || nextProducer != colorCode) {
-			while (pthread_cond_wait(&producerMutex[colorCode], &lock) != 0);
+			while (pthread_cond_wait(&producerCond[colorCode], &lock) != 0);
 		}
 
 		buffer[in].colorCode = colorCode;
@@ -45,10 +49,11 @@ void* producer(int colorCode) {
 		printf("One %s item has been deposited\n", colors[colorCode]);
 		nextProducer = (nextProducer + 1) % 3;
 
-		pthread_cond_signal(&consumerMutex[colorCode]);
-		pthread_cond_signal(&producerMutex[((colorCode + 1) % 3)]);
+		pthread_cond_signal(&consumerCond[colorCode]);
+		pthread_cond_signal(&producerCond[((colorCode + 1) % 3)]);
 		pthread_mutex_unlock(&lock);
 	}
+	fclose(file);
 }
 
 void* consumer(int colorCode) {
@@ -56,12 +61,16 @@ void* consumer(int colorCode) {
 	strcat(filename, colors[colorCode]);
 	strcat(filename, ".log");
 	FILE *file = fopen(filename, "w");
+	if(file == NULL) {
+		printf("Failed to open log file\n");
+		exit(1);
+	}
 
 	for(int i=0; i<iteration; i++) {
 		pthread_mutex_lock(&lock);
 
 		while(count == 0 || buffer[out].colorCode != colorCode) {
-			while(pthread_cond_wait(&consumerMutex[colorCode], &lock) != 0);
+			while(pthread_cond_wait(&consumerCond[colorCode], &lock) != 0);
 		}
 
 		fprintf(file,"%s %u.%06u\n", colors[colorCode], buffer[out].timestamp.tv_sec, buffer[out].timestamp.tv_usec);
@@ -70,16 +79,17 @@ void* consumer(int colorCode) {
 		count = count - 1;
 		printf("One %s item has been removed\n", colors[colorCode]);
 
-		pthread_cond_signal(&consumerMutex[((colorCode + 1) % 3)]);
-		pthread_cond_signal(&producerMutex[nextProducer]);
+		pthread_cond_signal(&consumerCond[((colorCode + 1) % 3)]);
+		pthread_cond_signal(&producerCond[nextProducer]);
 		pthread_mutex_unlock(&lock);
 	}
+	fclose(file);
 }
 
 
 int main(int argc, char const *argv[]) {
 	if(argc != 2) {
-		printf("Please enter a positive integer to initialize the buffer.\n");
+		printf("To execute the program, please use command: ./prodcons [(int)bufferSize].\n");
 		return(0);
 	}
 	bufferSize = atoi(argv[1]);
@@ -89,10 +99,6 @@ int main(int argc, char const *argv[]) {
 	}
 
 	buffer= malloc(sizeof(struct item) * bufferSize);
-
-	colors[0] = "red";
-	colors[1] = "green";
-	colors[2] = "blue";
 
 	pthread_t producerThreads[3];
 	pthread_t consumerThreads[3];
@@ -130,6 +136,6 @@ int main(int argc, char const *argv[]) {
 	}
 
 	free(buffer);
-	printf("Program Exiting.\n");
+	printf("Program exiting.\n");
 	return 0;
 }

@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <sys/types.h>
+#include <sys/time.h>
 
 const char* colors[3] = {"red", "green", "blue"};
 
