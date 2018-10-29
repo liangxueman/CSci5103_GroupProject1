@@ -73,7 +73,7 @@ void* consumer(int colorCode) {
 			while(pthread_cond_wait(&consumerCond[colorCode], &lock) != 0);
 		}
 
-		fprintf(file,"%s %u.%06u\n", colors[colorCode], buffer[out].timestamp.tv_sec, buffer[out].timestamp.tv_usec);
+		fprintf(file,"%s %ld.%06u\n", colors[colorCode], buffer[out].timestamp.tv_sec, buffer[out].timestamp.tv_usec);
 
 		out = (out + 1) % bufferSize;
 		count = count - 1;
@@ -89,7 +89,7 @@ void* consumer(int colorCode) {
 
 int main(int argc, char const *argv[]) {
 	if(argc != 2) {
-		printf("To execute the program, please use command: ./prodcons [(int)bufferSize].\n");
+		printf("To execute the program, please use command: ./prodcons (int)[bufferSize].\n");
 		return(0);
 	}
 	bufferSize = atoi(argv[1]);
@@ -105,8 +105,8 @@ int main(int argc, char const *argv[]) {
 	pthread_mutex_init(&lock, NULL);
 
 	for(int i=0; i<3; i++) {
-		pthread_cond_init(&consumerMutex[i], NULL);
-		pthread_cond_init(&producerMutex[i], NULL);
+		pthread_cond_init(&consumerCond[i], NULL);
+		pthread_cond_init(&producerCond[i], NULL);
 	}
 
 	int n;
@@ -129,10 +129,10 @@ int main(int argc, char const *argv[]) {
 			printf("Error in pthread_join\n");
 			exit(1);
 		}
-		// if(n = pthread_join(producerThreads[i], NULL)) {
-		// 	printf("Error in pthread join\n");
-		// 	exit(1);
-		// }
+		if(n = pthread_join(producerThreads[i], NULL)) {
+			printf("Error in pthread join\n");
+			exit(1);
+		}
 	}
 
 	free(buffer);

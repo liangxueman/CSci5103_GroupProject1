@@ -13,7 +13,7 @@
 int main(int argc, const char* argv[]) {
 	if(argc != 3) {
 		printf("To execute the program, please use command: ./producer (int)[key] (int)[colorCode]\n");
-		return (0);
+		return 0;
 	}
 
 	int colorCode = atoi(argv[2]);
@@ -24,9 +24,9 @@ int main(int argc, const char* argv[]) {
 	}
 
 	struct sharedContent* ptr = shmat(shmIdentifier, (void*)NULL, 1023); 
-	if((void*)ptr == -1) {
+	if(ptr == (void*)-1) {
 		printf("Fialed to shmat in producer process.\n");
-		exit(1);
+		exit(2);
 	}
 
 	char filename[80] = "producer_";
@@ -37,28 +37,30 @@ int main(int argc, const char* argv[]) {
 		printf("Failed to open log file in producer process.\n");
 		exit(1);
 	}
+	
+	struct item* buffer = (struct item*)(ptr + 1);
 
 	for(int i=0; i<iteration; i++) {
-		pthread_mutex_lock(&ptr[0].lock);
-		while (ptr[0].count == bufferSize || ptr[0].nextProducer != colorCode) {
-			while (pthread_cond_wait(&ptr[0].producerCond[colorCode], &ptr[0].lock) != 0);
+		pthread_mutex_lock(&ptr->lock);
+		while (ptr->count == ptr->bufferSize || ptr->nextProducer != colorCode) {
+			while (pthread_cond_wait(&ptr->producerCond[colorCode], &ptr->lock) != 0);
 		}
 
-		ptr[0].buffer[ptr[0].in].colorCode = colorCode;
-		gettimeofday(&ptr[0].buffer[ptr[0].in].timestamp, NULL);
-		fprintf(file, "%s %u.%06u\n", colors[colorCode], ptr[0].buffer[ptr[0].in].timestamp.tv_sec, ptr[0].buffer[ptr[0].in].timestamp.tv_usec);
+		buffer[ptr->in].colorCode = colorCode;
+		gettimeofday(&buffer[ptr->in].timestamp, NULL);
+		fprintf(file, "%s %ld.%06u\n", colors[colorCode], buffer[ptr->in].timestamp.tv_sec, buffer[ptr->in].timestamp.tv_usec);
 
-		ptr[0].count = ptr[0].count + 1;
-		ptr[0].in = (ptr[0].in + 1) % bufferSize;
+		ptr->count = ptr->count + 1;
+		ptr->in = (ptr->in + 1) % ptr->bufferSize;
 		printf("One %s item has been deposited\n", colors[colorCode]);
-		ptr[0].nextProducer = (ptr[0].nextProducer + 1) % 3;
+		ptr->nextProducer = (ptr->nextProducer + 1) % 3;
 
-		pthread_cond_signal(&ptr[0].consumerCond[colorCode]);
-		pthread_cond_signal(&ptr[0].producerCond[((colorCode + 1) % 3)]);
-		pthread_mutex_unlock(&ptr[0].lock);
+		pthread_cond_signal(&ptr->consumerCond[colorCode]);
+		pthread_cond_signal(&ptr->producerCond[((colorCode + 1) % 3)]);
+		pthread_mutex_unlock(&ptr->lock);
 	}
 
 	fclose(file);
 	shmdt((void*)ptr);
-	return (0);
+	return 0;
 }

@@ -13,7 +13,7 @@
 int main(int argc, const char* argv[]) {
 	if(argc != 3) {
 		printf("To execute the program, please use command: ./consumer (int)[key] (int)[colorCode]\n");
-		return (0);
+		return 0;
 	}
 
 	int colorCode = atoi(argv[2]);
@@ -24,9 +24,9 @@ int main(int argc, const char* argv[]) {
 	}
 
 	struct sharedContent* ptr = shmat(shmIdentifier, (void*)NULL, 1023); 
-	if((void*)ptr == -1) {
+	if(ptr == (void*)-1) {
 		printf("Fialed to shmat in consumer process.\n");
-		exit(1);
+		exit(2);
 	}
 
 	char filename[80] = "consumer_";
@@ -38,25 +38,27 @@ int main(int argc, const char* argv[]) {
 		exit(1);
 	}
 
-	for(int i=0; i<iteration; i++) {
-		pthread_mutex_lock(&ptr[0].lock);
+	struct item* buffer = (struct item*)(ptr + 1);
 
-		while(ptr[0].count == 0 || ptr[0].buffer[ptr[0].out].colorCode != colorCode) {
-			while(pthread_cond_wait(&ptr[0].consumerCond[colorCode], &ptr[0].lock) != 0);
+	for(int i=0; i<iteration; i++) {
+		pthread_mutex_lock(&ptr->lock);
+
+		while(ptr->count == 0 || buffer[ptr->out].colorCode != colorCode) {
+			while(pthread_cond_wait(&ptr->consumerCond[colorCode], &ptr->lock) != 0);
 		}
 
-		fprintf(file,"%s %u.%06u\n", colors[colorCode], ptr[0].buffer[ptr[0].out].timestamp.tv_sec, ptr[0].buffer[ptr[0].out].timestamp.tv_usec);
+		fprintf(file,"%s %u.%06u\n", colors[colorCode], buffer[ptr->out].timestamp.tv_sec, buffer[ptr->out].timestamp.tv_usec);
 
-		ptr[0].out = (ptr[0].out + 1) % bufferSize;
-		ptr[0].count = ptr[0].count - 1;
+		ptr->out = (ptr->out + 1) % ptr->bufferSize;
+		ptr->count = ptr->count - 1;
 		printf("One %s item has been removed\n", colors[colorCode]);
 
-		pthread_cond_signal(&ptr[0].consumerCond[((colorCode + 1) % 3)]);
-		pthread_cond_signal(&ptr[0].producerCond[ptr[0].nextProducer]);
-		pthread_mutex_unlock(&ptr[0].lock);
+		pthread_cond_signal(&ptr->consumerCond[((colorCode + 1) % 3)]);
+		pthread_cond_signal(&ptr->producerCond[ptr->nextProducer]);
+		pthread_mutex_unlock(&ptr->lock);
 	}
 
 	fclose(file);
 	shmdt((void*)ptr);
-	return (0);
+	return 0;
 }

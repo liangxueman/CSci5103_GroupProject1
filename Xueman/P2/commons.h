@@ -1,9 +1,9 @@
+
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/time.h>
 
-#define bufferSize 6
-#define iteration 20
+#define iteration 1000
 
 const char* colors[3] = {"red", "green", "blue"};
 
@@ -13,7 +13,8 @@ struct item {
 };
 
 struct sharedContent {
-  struct item buffer[bufferSize];
+  // struct item buffer[bufferSize];
+  int bufferSize;
   int count;
   int in;
   int out;

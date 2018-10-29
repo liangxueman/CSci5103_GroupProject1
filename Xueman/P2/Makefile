@@ -16,4 +16,3 @@ consumer: consumer.c
 
 clean:
 	-rm $(output) *.log
-

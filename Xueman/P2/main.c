@@ -9,17 +9,17 @@
 #include <unistd.h>
 
 int main(int argc, char* argv[]) {
-	// if( argc != 2 ) {
-	// 	printf("To execute the program, use command: ./prodcons (int)[buffernSize]\n");
-	// 	exit(0);
-	// }
+	if( argc != 2 ) {
+		printf("To execute the program, use command: ./prodcons (int)[buffernSize]\n");
+		exit(0);
+	}
 
-	// buffernSize = atoi(argv[1]);
+	int bufferSize = atoi(argv[1]);
 	int shmem_id;
 	struct sharedContent* shmem_ptr;
 	key_t key = 4456;  // a random key to access shared memory
-	// int size = sizeof(struct sharedContent) + sizeof(struct item) * bufferSize;
-	int size = 2048;
+	int size = sizeof(struct sharedContent) + sizeof(struct item) * bufferSize;
+	// int size = 2048;
 	int flag = 1023;  // all permissions and modes are set
 
 	shmem_id = shmget(key, size, flag);
@@ -31,28 +31,29 @@ int main(int argc, char* argv[]) {
 	shmem_ptr = shmat(shmem_id, (void*)NULL, flag);
 	if(shmem_ptr == (void*)-1) {
 		printf("Fialed to shmat in main process.\n");
-		exit(1);
+		exit(2);
 	}
 
-	shmem_ptr[0].count = 0;
-	shmem_ptr[0].in = 0;
-	shmem_ptr[0].out = 0;
-	shmem_ptr[0].nextProducer = 0;
+	shmem_ptr->count = 0;
+	shmem_ptr->in = 0;
+	shmem_ptr->out = 0;
+	shmem_ptr->nextProducer = 0;
+	shmem_ptr->bufferSize = bufferSize;
 
 	pthread_mutexattr_t attrmutex;
 	pthread_mutexattr_init(&attrmutex);
 	pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
-	pthread_mutex_init(&(shmem_ptr[0].lock), &attrmutex);
+	pthread_mutex_init(&shmem_ptr->lock, &attrmutex);
 
 	pthread_condattr_t attrcond;
 	pthread_condattr_init(&attrcond);
 	pthread_condattr_setpshared(&attrcond, PTHREAD_PROCESS_SHARED);
 	for(int i=0; i<3; i++) {
-		pthread_cond_init(&shmem_ptr[0].producerCond[i], &attrcond);
+		pthread_cond_init(&shmem_ptr->producerCond[i], &attrcond);
 	}
 
 	for(int i=0; i<3; i++) {
-		pthread_cond_init(&shmem_ptr[0].consumerCond[i], &attrcond);
+		pthread_cond_init(&shmem_ptr->consumerCond[i], &attrcond);
 	}
 
 	char keyString[10];
@@ -81,4 +82,5 @@ int main(int argc, char* argv[]) {
   wait(&status); //wait all the process to terminate
   shmctl(shmem_id, IPC_RMID, NULL);
   printf("Program exiting.\n");
+  return 0;
 }
