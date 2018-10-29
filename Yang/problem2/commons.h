@@ -4,7 +4,6 @@
 
 const char* colors[3] = {"red", "green", "blue"};
 
-#define buffer_size 6
 #define number_deposits 1000
 
 typedef struct item {
@@ -13,7 +12,7 @@ typedef struct item {
 } item;
 
 typedef struct shared_content {
-  item buffer[buffer_size];
+  int buffer_size;
   int count;
   int in;
   int out;

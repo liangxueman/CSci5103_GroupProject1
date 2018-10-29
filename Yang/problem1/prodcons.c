@@ -52,7 +52,7 @@ void* producer(int color_id) {
     // deposit
     buffer[in].color_id = color_id;
     gettimeofday(&buffer[in].timestamp, NULL);
-    fprintf(f, "%s %u.%06u\n", colors[color_id],
+    fprintf(f, "%s %lu.%06lu\n", colors[color_id],
         buffer[in].timestamp.tv_sec, buffer[in].timestamp.tv_usec);
     printf("producer_%s deposit %d/%d \n", colors[color_id], i + 1, number_deposits);
 
@@ -89,7 +89,7 @@ void* consumer(int color_id) {
       while (pthread_cond_wait(&itemAvailable, &wr_lock) != 0);
 
     // consume
-    fprintf(f,"%s %u.%06u\n", colors[buffer[out].color_id],
+    fprintf(f,"%s %lu.%06lu\n", colors[buffer[out].color_id],
         buffer[out].timestamp.tv_sec, buffer[out].timestamp.tv_usec);
     printf("consumer_%s consume %d/%d, item color %s \n", colors[color_id],
            i + 1, number_deposits, colors[buffer[out].color_id]);

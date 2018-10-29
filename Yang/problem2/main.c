@@ -12,11 +12,12 @@
 // TODO: make buffer_size an argument to initialize buffer in commons.h
 
 int main(int argc, char *argv[]) {
-//  if (argc != 2) {
-//    printf("./prodcons buffer_size\n");
-//    exit(0);
-//  }
+  if (argc != 2) {
+    printf("./prodcons buffer_size\n");
+    exit(0);
+  }
 
+  int buffer_size = atoi(argv[1]);
   // shared memory identifier
   int shmem_id;
   // pointer to shared segment
@@ -25,7 +26,7 @@ int main(int argc, char *argv[]) {
   // key to the shared memory
   key_t key = 4455;
   // 2Kb memory
-  size_t size = 2048;
+  size_t size = sizeof(struct shared_content) + sizeof(struct item) * buffer_size;
   // all permissions and modes are set
   int flag = 1023;
 
