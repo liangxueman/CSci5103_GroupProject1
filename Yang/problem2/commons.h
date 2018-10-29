@@ -19,6 +19,10 @@ typedef struct shared_content {
   int out;
   pthread_cond_t spaceAvailable, itemAvailable;
   pthread_mutex_t wr_lock;
+  /*
+   * a cycle of color mutex locks to enforce the deposit and consuming order
+   * only the first one would be unlocked at the initialization
+   */
   pthread_mutex_t color_lock_producer[3];
   pthread_mutex_t color_lock_consumer[3];
 } shared_content;

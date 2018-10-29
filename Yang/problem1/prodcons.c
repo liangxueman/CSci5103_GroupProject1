@@ -18,14 +18,19 @@ int count = 0;
 int in = 0;
 int out = 0;
 
-const char* colors[3];
+const char* colors[3] = {"red", "green", "blue"};
 
 pthread_cond_t spaceAvailable, itemAvailable;
 pthread_mutex_t wr_lock;
+/*
+ * a cycle of color mutex locks to enforce the deposit and consuming order
+ * only the first one would be unlocked at the initialization
+ */
 pthread_mutex_t color_lock_producer[3];
 pthread_mutex_t color_lock_consumer[3];
 
 void* producer(int color_id) {
+  // creat output log file
   char file_name[100] = "producer_";
   strcat(file_name, colors[color_id]);
   char file_extend[10] = ".log";
@@ -49,10 +54,10 @@ void* producer(int color_id) {
     gettimeofday(&buffer[in].timestamp, NULL);
     fprintf(f, "%s %u.%06u\n", colors[color_id],
         buffer[in].timestamp.tv_sec, buffer[in].timestamp.tv_usec);
-    printf("producer_%s deposit %d/%d \n", colors[color_id], i, number_deposits);
+    printf("producer_%s deposit %d/%d \n", colors[color_id], i + 1, number_deposits);
 
     count = count + 1;
-    in = (in+1) % buffer_size;
+    in = (in + 1) % buffer_size;
 
     // exit critical section
     pthread_mutex_unlock(&wr_lock);
@@ -64,6 +69,7 @@ void* producer(int color_id) {
 }
 
 void* consumer(int color_id) {
+  // creat output log file
   char file_name[100] = "consumer_";
   strcat(file_name, colors[color_id]);
   char file_extend[10] = ".log";
@@ -86,7 +92,7 @@ void* consumer(int color_id) {
     fprintf(f,"%s %u.%06u\n", colors[buffer[out].color_id],
         buffer[out].timestamp.tv_sec, buffer[out].timestamp.tv_usec);
     printf("consumer_%s consume %d/%d, item color %s \n", colors[color_id],
-           i, number_deposits, colors[buffer[out].color_id]);
+           i + 1, number_deposits, colors[buffer[out].color_id]);
 
     count = count - 1;
     out = (out + 1) % buffer_size;
@@ -109,10 +115,6 @@ int main(int argc, char *argv[]) {
   assert(buffer_size > 0);
   buffer = malloc(sizeof(struct item) * buffer_size);
 
-  colors[0] = "red";
-  colors[1] = "green";
-  colors[2] = "blue";
-
   pthread_t producer_tid[3];
   pthread_t consumer_tid[3];
   pthread_mutex_init(&wr_lock, NULL);
@@ -130,9 +132,12 @@ int main(int argc, char *argv[]) {
   pthread_cond_init(&itemAvailable, NULL);
 
   for (int i = 0; i < 3; i++) {
+    // create producer thread
     pthread_create(&producer_tid[i], NULL, producer, i);
+    // create consumer thread
     pthread_create(&consumer_tid[i], NULL, consumer, i);
   }
+  // wait for all threads to terminate
   for (int j = 0; j < 3; j++) {
     pthread_join(producer_tid[j], NULL);
     pthread_join(consumer_tid[j], NULL);
