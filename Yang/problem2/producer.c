@@ -43,24 +43,26 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  struct item* buffer = (struct item*)(ptr + 1);
+
   for (int i = 0; i < number_deposits; i++) {
     // wait on its own color lock to enforce the deposit order
     pthread_mutex_lock(&ptr[0].color_lock_producer[color_id]);
     pthread_mutex_lock(&ptr[0].wr_lock);
     // enter critical section
-    while (ptr[0].count == buffer_size)
+    while (ptr[0].count == ptr[0].buffer_size)
       // producer blocked when buffer is full
       while (pthread_cond_wait(&ptr[0].spaceAvailable, &ptr[0].wr_lock) != 0);
 
     // deposit
-    ptr[0].buffer[ptr[0].in].color_id = color_id;
-    gettimeofday(&ptr[0].buffer[ptr[0].in].timestamp, NULL);
-    fprintf(f, "%s %u.%06u\n", colors[color_id],
-        ptr[0].buffer[ptr[0].in].timestamp.tv_sec, ptr[0].buffer[ptr[0].in].timestamp.tv_usec);
+    buffer[ptr[0].in].color_id = color_id;
+    gettimeofday(&buffer[ptr[0].in].timestamp, NULL);
+    fprintf(f, "%s %lu.%06lu\n", colors[color_id],
+        buffer[ptr[0].in].timestamp.tv_sec, buffer[ptr[0].in].timestamp.tv_usec);
     printf("producer_%s deposit %d/%d \n", colors[color_id], i + 1, number_deposits);
 
     ptr[0].count = ptr[0].count + 1;
-    ptr[0].in = (ptr[0].in + 1) % buffer_size;
+    ptr[0].in = (ptr[0].in + 1) % ptr[0].buffer_size;
 
     // exit critical section
     pthread_mutex_unlock(&ptr[0].wr_lock);

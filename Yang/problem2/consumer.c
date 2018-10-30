@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  struct item* buffer = (struct item*)(ptr + 1);
+
   for (int i = 0; i < number_deposits; i++) {
     // wait on its own color lock to enforce the  order
     pthread_mutex_lock(&ptr[0].color_lock_consumer[color_id]);
@@ -53,13 +55,13 @@ int main(int argc, char *argv[]) {
       while (pthread_cond_wait(&ptr[0].itemAvailable, &ptr[0].wr_lock) != 0);
 
     // consume
-    fprintf(f,"%s %u.%06u\n", colors[ptr[0].buffer[ptr[0].out].color_id],
-        ptr[0].buffer[ptr[0].out].timestamp.tv_sec, ptr[0].buffer[ptr[0].out].timestamp.tv_usec);
+    fprintf(f,"%s %lu.%06lu\n", colors[buffer[ptr[0].out].color_id],
+       buffer[ptr[0].out].timestamp.tv_sec, buffer[ptr[0].out].timestamp.tv_usec);
     printf("consumer_%s consume %d/%d, item color %s \n", colors[color_id],
-           i + 1, number_deposits, colors[ptr[0].buffer[ptr[0].out].color_id]);
+           i + 1, number_deposits, colors[buffer[ptr[0].out].color_id]);
 
     ptr[0].count = ptr[0].count - 1;
-    ptr[0].out = (ptr[0].out + 1) % buffer_size;
+    ptr[0].out = (ptr[0].out + 1) %  ptr[0].buffer_size;
     // exit critical section
     pthread_mutex_unlock(&ptr[0].wr_lock);
     pthread_cond_signal(&ptr[0].spaceAvailable);
