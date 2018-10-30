@@ -1,3 +1,12 @@
+/* 
+  * CSci5103 Fall 2018
+  * Assignment 4
+  * Group Memebers: Xueman Liang, Yang Yang
+  * Student IDs: 4271136, 5305584
+  * x500: liang195, yang5276
+  * CSELABS Machine: UMN VOLE CSE-IT (http://vole.cse.umn.edu/) Virtual Linux Machine
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -13,6 +22,7 @@ struct item {
 
 int bufferSize; 
 struct item* buffer;
+// producer and consumer color id array
 const char* colors[3] = {"red", "green", "blue"};
 
 int count = 0;
@@ -25,6 +35,7 @@ pthread_cond_t producerCond[3];
 pthread_cond_t consumerCond[3];
 
 void* producer(int colorCode) {
+	// create the log files
 	char filename[80] = "producer_";
 	strcat(filename, colors[colorCode]);
 	strcat(filename, ".log");
@@ -40,14 +51,16 @@ void* producer(int colorCode) {
 			while (pthread_cond_wait(&producerCond[colorCode], &lock) != 0);
 		}
 
+		// deposit an item
 		buffer[in].colorCode = colorCode;
 		gettimeofday(&buffer[in].timestamp, NULL);
+		// write to log file
 		fprintf(file, "%s %u.%06u\n", colors[colorCode], buffer[in].timestamp.tv_sec, buffer[in].timestamp.tv_usec);
 
 		count = count + 1;
 		in = (in + 1) % bufferSize;
-		printf("One %s item has been deposited\n", colors[colorCode]);
 		nextProducer = (nextProducer + 1) % 3;
+		printf("One %s item has been deposited\n", colors[colorCode]);
 
 		pthread_cond_signal(&consumerCond[colorCode]);
 		pthread_cond_signal(&producerCond[((colorCode + 1) % 3)]);
@@ -57,6 +70,7 @@ void* producer(int colorCode) {
 }
 
 void* consumer(int colorCode) {
+	// create the log files
 	char filename[80] = "consumer_";
 	strcat(filename, colors[colorCode]);
 	strcat(filename, ".log");
@@ -69,6 +83,7 @@ void* consumer(int colorCode) {
 	for(int i=0; i<iteration; i++) {
 		pthread_mutex_lock(&lock);
 
+		// critical section
 		while(count == 0 || buffer[out].colorCode != colorCode) {
 			while(pthread_cond_wait(&consumerCond[colorCode], &lock) != 0);
 		}
@@ -92,12 +107,13 @@ int main(int argc, char const *argv[]) {
 		printf("To execute the program, please use command: ./prodcons (int)[bufferSize].\n");
 		return(0);
 	}
+
 	bufferSize = atoi(argv[1]);
 	if(bufferSize <=0 ) {
 		printf("Please enter a POSITIVE integer to initialize the buffer.\n");
 		return(0);
 	}
-
+	// initilize the buffer
 	buffer= malloc(sizeof(struct item) * bufferSize);
 
 	pthread_t producerThreads[3];
@@ -126,11 +142,11 @@ int main(int argc, char const *argv[]) {
 
 	for(int i=0; i<3; i++) {
 		if(n = pthread_join(consumerThreads[i], NULL)) {
-			printf("Error in pthread_join\n");
+			printf("Error in consumer pthread_join\n");
 			exit(1);
 		}
 		if(n = pthread_join(producerThreads[i], NULL)) {
-			printf("Error in pthread join\n");
+			printf("Error in producer pthread join\n");
 			exit(1);
 		}
 	}

@@ -1,3 +1,12 @@
+/* 
+  * CSci5103 Fall 2018
+  * Assignment 4
+  * Group Memebers: Xueman Liang, Yang Yang
+  * Student IDs: 4271136, 5305584
+  * x500: liang195, yang5276
+  * CSELABS Machine: UMN VOLE CSE-IT (http://vole.cse.umn.edu/) Virtual Linux Machine
+*/
+
 #include "commons.h"
 #include <pthread.h>
 #include <stdio.h>
@@ -46,15 +55,19 @@ int main(int argc, const char* argv[]) {
 			while (pthread_cond_wait(&ptr->producerCond[colorCode], &ptr->lock) != 0);
 		}
 
+		// deposite one item to buffer
 		buffer[ptr->in].colorCode = colorCode;
 		gettimeofday(&buffer[ptr->in].timestamp, NULL);
+
+		// write to log file
 		fprintf(file, "%s %ld.%06u\n", colors[colorCode], buffer[ptr->in].timestamp.tv_sec, buffer[ptr->in].timestamp.tv_usec);
 
 		ptr->count = ptr->count + 1;
 		ptr->in = (ptr->in + 1) % ptr->bufferSize;
-		printf("One %s item has been deposited\n", colors[colorCode]);
 		ptr->nextProducer = (ptr->nextProducer + 1) % 3;
+		printf("One %s item has been deposited\n", colors[colorCode]);
 
+		// signal the corresponding consumer to consume and the next producer to produce
 		pthread_cond_signal(&ptr->consumerCond[colorCode]);
 		pthread_cond_signal(&ptr->producerCond[((colorCode + 1) % 3)]);
 		pthread_mutex_unlock(&ptr->lock);
