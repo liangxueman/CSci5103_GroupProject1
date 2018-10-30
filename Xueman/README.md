@@ -15,9 +15,11 @@ This program assumes that only red, green and blue producers and consumers will 
 
 ## Program Compilation and Execution
 #### Problem 1
+Navigate to the P1 directory
 To compile: make <br/>
 To execute: ./prodcons [bufferSize]
 
 #### Problem 2
+Navigate to the P2 directory
 To compile: make <br/>
 To execute: ./main [bufferSize]
