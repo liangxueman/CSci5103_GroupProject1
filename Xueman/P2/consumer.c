@@ -71,8 +71,12 @@ int main(int argc, const char* argv[]) {
 			while(pthread_cond_wait(&ptr->consumerCond[colorCode], &ptr->lock) != 0);
 		}
 
+		// to record the item consume timestamp
+		struct timeval consumeTimestamp;
+		gettimeofday(&consumeTimestamp, NULL);
+
 		// write to log file
-		fprintf(file,"%s %ld.%06u\n", colors[colorCode], buffer[ptr->out].timestamp.tv_sec, buffer[ptr->out].timestamp.tv_usec);
+		fprintf(file,"%s %ld.%06u %ld.%06u\n", colors[colorCode], buffer[ptr->out].timestamp.tv_sec, buffer[ptr->out].timestamp.tv_usec, consumeTimestamp.tv_sec, consumeTimestamp.tv_usec);
 
 		ptr->out = (ptr->out + 1) % ptr->bufferSize;
 		ptr->count = ptr->count - 1;

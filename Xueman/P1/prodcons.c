@@ -88,7 +88,11 @@ void* consumer(int colorCode) {
 			while(pthread_cond_wait(&consumerCond[colorCode], &lock) != 0);
 		}
 
-		fprintf(file,"%s %ld.%06u\n", colors[colorCode], buffer[out].timestamp.tv_sec, buffer[out].timestamp.tv_usec);
+		// to record the item consume timestamp
+		struct timeval consumeTimestamp;
+		gettimeofday(&consumeTimestamp, NULL);
+
+		fprintf(file,"%s %ld.%06u %ld.%06u\n", colors[colorCode], buffer[out].timestamp.tv_sec, buffer[out].timestamp.tv_usec, consumeTimestamp.tv_sec, consumeTimestamp.tv_usec);
 
 		out = (out + 1) % bufferSize;
 		count = count - 1;
