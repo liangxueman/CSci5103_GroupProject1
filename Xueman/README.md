@@ -15,9 +15,9 @@ This program assumes that only red, green and blue producers and consumers will 
 
 ## Program Compilation and Execution
 #### Problem 1
-To compile: make
+To compile: make <br/>
 To execute: ./prodcons [bufferSize]
 
 #### Problem 2
-To compile: make
+To compile: make <br/>
 To execute: ./main [bufferSize]
