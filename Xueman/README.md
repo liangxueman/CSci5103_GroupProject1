@@ -7,7 +7,7 @@
 ## Test Machine
 The codes have been tested on the UMN VOLE CSE-IT (http://vole.cse.umn.edu/) Virtual Linux Machine
 
-## Known issues
+## Issues
 No known issues or bugs
 
 ## Program Assumption
