@@ -43,7 +43,7 @@ int main(int argc, const char* argv[]) {
 	// shared memory pointer
 	struct sharedContent* ptr = shmat(shmIdentifier, (void*)NULL, 1023); 
 	if(ptr == (void*)-1) {
-		printf("Fialed to shmat in consumer process.\n");
+		printf("Failed to shmat in consumer process.\n");
 		exit(2);
 	}
 

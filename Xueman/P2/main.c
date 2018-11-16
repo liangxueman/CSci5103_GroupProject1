@@ -39,13 +39,13 @@ int main(int argc, char* argv[]) {
 
 	shmem_id = shmget(key, size, flag);
 	if(shmem_id == -1) {
-		printf("Fialed to shmget in main process.\n");
+		printf("Failed to shmget in main process.\n");
 		exit(1);
 	}
 
 	shmem_ptr = shmat(shmem_id, (void*)NULL, flag);
 	if(shmem_ptr == (void*)-1) {
-		printf("Fialed to shmat in main process.\n");
+		printf("Failed to shmat in main process.\n");
 		exit(2);
 	}
 	// set parameters in shared memory 

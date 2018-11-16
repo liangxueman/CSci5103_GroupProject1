@@ -34,7 +34,7 @@ int main(int argc, const char* argv[]) {
 
 	struct sharedContent* ptr = shmat(shmIdentifier, (void*)NULL, 1023); 
 	if(ptr == (void*)-1) {
-		printf("Fialed to shmat in producer process.\n");
+		printf("Failed to shmat in producer process.\n");
 		exit(2);
 	}
 
