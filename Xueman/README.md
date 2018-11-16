@@ -1,13 +1,13 @@
 # CSCI 5103 Assignment 4
 
-## group members
-Xueman Liang, 4271136, liang195@umn.edu
-Yang Yang, 5305584, yang5276@umn.edu
+## Group Members
+* Xueman Liang, 4271136, liang195@umn.edu
+* Yang Yang, 5305584, yang5276@umn.edu
 
 ## Test Machine
 The codes have been tested on the UMN VOLE CSE-IT (http://vole.cse.umn.edu/) Virtual Linux Machine
 
-## known issues
+## Known issues
 No known issues or bugs
 
 ## Program Assumption
